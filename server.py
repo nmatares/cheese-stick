@@ -13,16 +13,55 @@ app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 # Admin password - set via environment variable or defaults to 'cheesestick'
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'cheesestick')
 
+# MongoDB setup (optional - falls back to JSON file if not configured)
+MONGODB_URI = os.environ.get('MONGODB_URI')
+db = None
+
+if MONGODB_URI:
+    try:
+        from pymongo import MongoClient
+        client = MongoClient(MONGODB_URI)
+        db = client.cheesestick
+        print("Connected to MongoDB")
+    except Exception as e:
+        print(f"MongoDB connection failed: {e}")
+        db = None
+
 COMPETITION_FILE = 'competition.json'
 CACHE_FILE = 'price_cache.json'
 
 def load_competition():
+    # Try MongoDB first
+    if db is not None:
+        try:
+            doc = db.competition.find_one({'_id': 'main'})
+            if doc:
+                doc.pop('_id', None)
+                return doc
+        except Exception as e:
+            print(f"MongoDB load error: {e}")
+
+    # Fall back to JSON file
     if os.path.exists(COMPETITION_FILE):
         with open(COMPETITION_FILE, 'r') as f:
             return json.load(f)
     return None
 
 def save_competition(data):
+    # Try MongoDB first
+    if db is not None:
+        try:
+            db.competition.replace_one(
+                {'_id': 'main'},
+                {**data, '_id': 'main'},
+                upsert=True
+            )
+            print("Saved to MongoDB")
+            return
+        except Exception as e:
+            print(f"MongoDB save error: {e}")
+
+    # Fall back to JSON file
     with open(COMPETITION_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
