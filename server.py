@@ -133,10 +133,6 @@ def validate_symbol(symbol):
 def index():
     return send_from_directory('.', 'index.html')
 
-@app.route('/<path:path>')
-def static_files(path):
-    return send_from_directory('.', path)
-
 @app.route('/api/competition', methods=['GET'])
 def get_competition():
     data = load_competition()
@@ -613,6 +609,11 @@ def get_player_details(player_index):
         'performance': period_performance,
         'as_of': last_day
     })
+
+# Static files - must be last to not interfere with API routes
+@app.route('/<path:path>')
+def static_files(path):
+    return send_from_directory('.', path)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))
