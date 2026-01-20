@@ -1,0 +1,3 @@
+flask
+yfinance<1.0
+gunicorn

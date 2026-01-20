@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Cheese Stick</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login View -->
+    <div id="login-view" class="view">
+        <div class="setup-container">
+            <h1>ADMIN ACCESS</h1>
+            <p class="subtitle">Enter password to manage competition</p>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="admin-password" placeholder="Enter admin password">
+            </div>
+
+            <button id="login-btn" class="primary-btn">LOGIN</button>
+            <p id="login-error" class="error-text hidden">Invalid password</p>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-view" class="view hidden">
+        <div class="setup-container">
+            <div class="admin-header">
+                <h1>ADMIN PANEL</h1>
+                <button id="back-to-site" class="icon-btn">VIEW SITE</button>
+            </div>
+            <p class="subtitle">Manage Competition Settings</p>
+
+            <div class="form-group">
+                <label>Competition Name</label>
+                <input type="text" id="comp-name" placeholder="Cheese Stick 2025">
+            </div>
+
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="start-date">
+            </div>
+
+            <div id="players-container">
+                <!-- Player forms will be generated here -->
+            </div>
+
+            <!-- Hidden canvas for image processing -->
+            <canvas id="icon-canvas" style="display: none;" width="100" height="100"></canvas>
+
+            <button id="save-competition" class="primary-btn">SAVE CHANGES</button>
+            <p id="save-status" class="status-text hidden"></p>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

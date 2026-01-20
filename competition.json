@@ -1,0 +1,68 @@
+{
+  "name": "Cheese Stick",
+  "start_date": "2026-01-12",
+  "initial_investment": 100000,
+  "stock_allocation": 20000,
+  "players": [
+    {
+      "name": "Alex",
+      "color": "#FF6384",
+      "longs": [
+        "NVO",
+        "TTD",
+        "MSTR",
+        "ALK",
+        "MU"
+      ],
+      "short": "ORCL"
+    },
+    {
+      "name": "Lisa",
+      "color": "#36A2EB",
+      "longs": [
+        "NVDA",
+        "LLY",
+        "TMC",
+        "CRSP",
+        "COST"
+      ],
+      "short": "TGT"
+    },
+    {
+      "name": "Nick",
+      "color": "#FFCE56",
+      "longs": [
+        "ASTS",
+        "RKLB",
+        "PLTR",
+        "MSTR",
+        "SOC"
+      ],
+      "short": "CVNA"
+    },
+    {
+      "name": "Roshan",
+      "color": "#4BC0C0",
+      "longs": [
+        "BRK-B",
+        "TSM",
+        "BROS",
+        "FIX",
+        "INTC"
+      ],
+      "short": "GBTC"
+    },
+    {
+      "name": "Random",
+      "color": "#9966FF",
+      "longs": [
+        "UJB",
+        "VCTR",
+        "JANP",
+        "DLS",
+        "MTA"
+      ],
+      "short": "EICC"
+    }
+  ]
+}

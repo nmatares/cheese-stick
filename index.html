@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cheese Stick</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js"></script>
+</head>
+<body>
+    <!-- Setup View -->
+    <div id="setup-view" class="view">
+        <div class="setup-container">
+            <h1>CHEESE STICK</h1>
+            <p class="subtitle">Stock Competition Tracker</p>
+
+            <div class="form-group">
+                <label>Competition Name</label>
+                <input type="text" id="comp-name" placeholder="Cheese Stick 2025">
+            </div>
+
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="start-date">
+            </div>
+
+            <div id="players-container">
+                <!-- Player forms will be generated here -->
+            </div>
+
+            <!-- Hidden canvas for image processing -->
+            <canvas id="icon-canvas" style="display: none;" width="100" height="100"></canvas>
+
+            <button id="save-competition" class="primary-btn">START COMPETITION</button>
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view hidden">
+        <header>
+            <h1 id="comp-title">CHEESE STICK</h1>
+            <div class="header-controls">
+                <button id="settings-btn" class="icon-btn">SETTINGS</button>
+            </div>
+        </header>
+
+        <div class="controls-bar">
+            <div class="view-toggles">
+                <button class="view-btn active" data-view="bar">BAR CHART</button>
+                <button class="view-btn" data-view="line">LINE GRAPH</button>
+                <button class="view-btn" data-view="race">RACE MODE</button>
+            </div>
+
+            <div class="player-toggles" id="player-toggles">
+                <!-- Player toggle buttons generated here -->
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="main-chart"></canvas>
+        </div>
+
+        <div id="race-controls" class="hidden">
+            <button id="play-pause" class="control-btn">PLAY</button>
+            <input type="range" id="speed-slider" min="1" max="10" value="5">
+            <span id="speed-label">Speed: 5x</span>
+            <button id="export-gif" class="control-btn secondary">EXPORT GIF</button>
+            <button id="cancel-gif" class="control-btn secondary hidden">CANCEL</button>
+            <span id="gif-progress"></span>
+            <span id="race-date" class="race-date"></span>
+        </div>
+
+        <div id="standings" class="standings-panel">
+            <h3>CURRENT STANDINGS</h3>
+            <div id="standings-list">
+                <!-- Standings generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>SETTINGS</h2>
+                <button class="close-btn" data-close="settings-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-row">
+                    <span>Include Short Position</span>
+                    <button id="short-toggle-btn" class="setting-toggle active">ON</button>
+                </div>
+                <div class="setting-row">
+                    <span>Theme</span>
+                    <button id="theme-toggle-btn" class="setting-toggle">LIGHT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div id="player-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="player-modal-title">PLAYER</h2>
+                <button class="close-btn" data-close="player-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="period-tabs">
+                    <button class="period-tab active" data-period="all">ALL TIME</button>
+                    <button class="period-tab" data-period="month">MONTH</button>
+                    <button class="period-tab" data-period="week">WEEK</button>
+                    <button class="period-tab" data-period="day">DAY</button>
+                </div>
+                <div id="player-summary">
+                    <!-- Summary stats will be loaded here -->
+                </div>
+                <div id="player-positions">
+                    <!-- Positions will be loaded here -->
+                </div>
+                <div id="player-news">
+                    <h3>MARKET NEWS</h3>
+                    <div id="news-list">
+                        <!-- News will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p id="loading-text">Loading stock data...</p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
