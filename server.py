@@ -154,14 +154,27 @@ def admin_login():
     data = request.json
     password = data.get('password', '')
 
+    # Debug: print password comparison (remove in production)
+    print(f"Login attempt - received: '{password}', expected: '{ADMIN_PASSWORD}'")
+
     if password == ADMIN_PASSWORD:
         session['admin'] = True
         return jsonify({'success': True})
-    return jsonify({'success': False}), 401
+    return jsonify({'success': False, 'hint': f'Expected length: {len(ADMIN_PASSWORD)}'}), 401
 
 @app.route('/api/admin/check', methods=['GET'])
 def admin_check():
     return jsonify({'authenticated': session.get('admin', False)})
+
+@app.route('/api/debug/env', methods=['GET'])
+def debug_env():
+    """Temporary debug endpoint - remove after fixing"""
+    return jsonify({
+        'admin_password_length': len(ADMIN_PASSWORD),
+        'admin_password_set': ADMIN_PASSWORD != 'cheesestick',
+        'mongodb_connected': db is not None,
+        'secret_key_set': app.secret_key is not None
+    })
 
 @app.route('/api/admin/logout', methods=['POST'])
 def admin_logout():
