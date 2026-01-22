@@ -10,34 +10,22 @@
     <script src="https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js"></script>
 </head>
 <body>
-    <!-- Setup View -->
-    <div id="setup-view" class="view">
-        <div class="setup-container">
-            <h1>CHEESE STICK</h1>
-            <p class="subtitle">Stock Competition Tracker</p>
+    <!-- Loading screen shown first -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p id="loading-text">Loading competition data...</p>
+    </div>
 
-            <div class="form-group">
-                <label>Competition Name</label>
-                <input type="text" id="comp-name" placeholder="Cheese Stick 2025">
-            </div>
-
-            <div class="form-group">
-                <label>Start Date</label>
-                <input type="date" id="start-date">
-            </div>
-
-            <div id="players-container">
-                <!-- Player forms will be generated here -->
-            </div>
-
-            <!-- Hidden canvas for image processing -->
-            <canvas id="icon-canvas" style="display: none;" width="100" height="100"></canvas>
-
-            <button id="save-competition" class="primary-btn">START COMPETITION</button>
+    <!-- No Data Message (hidden by default) -->
+    <div id="no-data-view" class="view hidden">
+        <div class="setup-container" style="text-align: center; padding-top: 100px;">
+            <h1 style="color: var(--accent-color); font-size: 3rem; letter-spacing: 0.3em;">CHEESE STICK</h1>
+            <p class="subtitle" style="margin-top: 20px;">Competition not yet configured</p>
+            <p style="color: var(--text-muted); margin-top: 10px;">Check back soon!</p>
         </div>
     </div>
 
-    <!-- Dashboard View -->
+    <!-- Dashboard View (hidden by default) -->
     <div id="dashboard-view" class="view hidden">
         <header>
             <h1 id="comp-title">CHEESE STICK</h1>
@@ -130,11 +118,587 @@
         </div>
     </div>
 
-    <div id="loading" class="loading hidden">
-        <div class="spinner"></div>
-        <p id="loading-text">Loading stock data...</p>
-    </div>
+    <script>
+        const PLAYER_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+        const INITIAL_INVESTMENT = 100000;
 
-    <script src="app.js"></script>
+        let competition = null;
+        let performanceData = null;
+        let mainChart = null;
+        let currentView = 'bar';
+        let activePlayers = new Set();
+        let includeShort = true;
+        let lightMode = false;
+
+        // Race mode state
+        let raceIndex = 0;
+        let racePlaying = false;
+        let raceSpeed = 5;
+        let raceAnimationId = null;
+        let raceYMin = null;
+        let raceYMax = null;
+
+        // Player icons for race mode
+        let playerIcons = [];
+        const DEFAULT_ICONS = ['🏎️', '🐎', '🚀', '🏍️', '🛸'];
+
+        function createEmojiImage(emoji, size = 28) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.font = `${size - 4}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, size / 2, size / 2);
+            const img = new Image();
+            img.src = canvas.toDataURL();
+            return img;
+        }
+
+        // Initialize
+        async function init() {
+            try {
+                const response = await fetch('/api/competition');
+                competition = await response.json();
+
+                console.log('Competition data:', competition);
+
+                if (competition && competition.players && competition.players.length > 0) {
+                    // Initialize player icons and active players
+                    playerIcons = [];
+                    activePlayers = new Set();
+                    competition.players.forEach((player, i) => {
+                        activePlayers.add(i);
+                        playerIcons.push(createEmojiImage(DEFAULT_ICONS[i % DEFAULT_ICONS.length], 28));
+                    });
+
+                    showDashboard();
+                } else {
+                    showNoData();
+                }
+            } catch (error) {
+                console.error('Error loading competition:', error);
+                showNoData();
+            }
+        }
+
+        function showNoData() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('no-data-view').classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('comp-title').textContent = competition.name || 'CHEESE STICK';
+            generatePlayerToggles();
+            loadPerformanceData();
+        }
+
+        function generatePlayerToggles() {
+            const container = document.getElementById('player-toggles');
+            container.innerHTML = '';
+
+            competition.players.forEach((player, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'player-toggle';
+                btn.style.borderColor = player.color;
+                btn.style.color = player.color;
+                btn.textContent = player.name;
+                btn.dataset.player = i;
+
+                btn.addEventListener('click', () => {
+                    if (activePlayers.has(i)) {
+                        activePlayers.delete(i);
+                        btn.classList.add('inactive');
+                    } else {
+                        activePlayers.add(i);
+                        btn.classList.remove('inactive');
+                    }
+                    if (currentView === 'race') {
+                        calculateRaceBounds();
+                    }
+                    updateChart();
+                    updateStandings();
+                });
+
+                container.appendChild(btn);
+            });
+        }
+
+        async function loadPerformanceData() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = 'Loading stock data...';
+
+            try {
+                const response = await fetch('/api/performance');
+                performanceData = await response.json();
+
+                if (performanceData.error) {
+                    alert(performanceData.error);
+                    return;
+                }
+
+                updateChart();
+                updateStandings();
+            } catch (error) {
+                console.error('Error loading performance data:', error);
+                alert('Failed to load performance data');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function getValue(historyItem) {
+            return includeShort ? historyItem.value_with_short : historyItem.value;
+        }
+
+        function calculateRaceBounds() {
+            let min = Infinity;
+            let max = -Infinity;
+
+            performanceData.players.forEach((player, i) => {
+                if (!activePlayers.has(i)) return;
+                player.history.forEach(h => {
+                    const val = getValue(h);
+                    if (val < min) min = val;
+                    if (val > max) max = val;
+                });
+            });
+
+            const padding = (max - min) * 0.05;
+            raceYMin = min - padding;
+            raceYMax = max + padding;
+        }
+
+        function updateChart() {
+            if (!performanceData) return;
+
+            if (mainChart) {
+                mainChart.destroy();
+            }
+
+            const ctx = document.getElementById('main-chart').getContext('2d');
+
+            if (currentView === 'bar') {
+                createBarChart(ctx);
+            } else if (currentView === 'line') {
+                createLineChart(ctx);
+            } else if (currentView === 'race') {
+                createLineChart(ctx, raceIndex);
+            }
+        }
+
+        function createBarChart(ctx) {
+            const activePlayerData = performanceData.players.map((player, i) => {
+                if (!activePlayers.has(i)) return null;
+                const history = player.history;
+                return {
+                    name: player.name,
+                    value: history.length > 0 ? getValue(history[history.length - 1]) : INITIAL_INVESTMENT,
+                    color: player.color,
+                    index: i
+                };
+            }).filter(p => p !== null);
+
+            const values = activePlayerData.map(p => p.value);
+            const minVal = Math.min(...values, INITIAL_INVESTMENT);
+            const maxVal = Math.max(...values, INITIAL_INVESTMENT);
+            const padding = (maxVal - minVal) * 0.1;
+
+            mainChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: activePlayerData.map(p => p.name),
+                    datasets: [{
+                        data: activePlayerData.map(p => p.value),
+                        backgroundColor: activePlayerData.map(p => p.color),
+                        borderColor: activePlayerData.map(p => p.color),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const idx = elements[0].index;
+                            const playerIndex = activePlayerData[idx].index;
+                            showPlayerModal(playerIndex);
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.raw;
+                                    const change = ((value - INITIAL_INVESTMENT) / INITIAL_INVESTMENT * 100).toFixed(2);
+                                    const sign = change >= 0 ? '+' : '';
+                                    return `$${value.toLocaleString()} (${sign}${change}%)`;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                baseline: {
+                                    type: 'line',
+                                    yMin: INITIAL_INVESTMENT,
+                                    yMax: INITIAL_INVESTMENT,
+                                    borderColor: lightMode ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+                                    borderWidth: 2,
+                                    borderDash: [6, 6]
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: minVal - padding,
+                            max: maxVal + padding,
+                            grid: { color: 'rgba(128,128,128,0.2)' },
+                            ticks: {
+                                color: lightMode ? '#666' : '#888',
+                                callback: (value) => '$' + value.toLocaleString()
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: lightMode ? '#666' : '#888' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createLineChart(ctx, maxIndex = null) {
+            const isRaceMode = maxIndex !== null;
+
+            const datasets = performanceData.players.map((player, i) => {
+                if (!activePlayers.has(i)) return null;
+
+                let history = player.history;
+                if (isRaceMode) {
+                    history = history.slice(0, maxIndex + 1);
+                }
+
+                let pointRadius = 0;
+                let pointStyle = 'circle';
+
+                if (isRaceMode && history.length > 0) {
+                    pointRadius = history.map((_, idx) => idx === history.length - 1 ? 20 : 0);
+                    pointStyle = playerIcons[i] || 'circle';
+                }
+
+                return {
+                    label: player.name,
+                    data: history.map(h => ({ x: h.date, y: getValue(h) })),
+                    borderColor: player.color,
+                    backgroundColor: player.color + '20',
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: pointRadius,
+                    pointStyle: pointStyle,
+                    pointHitRadius: 10,
+                    borderWidth: 2
+                };
+            }).filter(d => d !== null);
+
+            const labels = performanceData.trading_days;
+
+            const yAxisConfig = {
+                grid: { color: 'rgba(128,128,128,0.2)' },
+                ticks: {
+                    color: lightMode ? '#666' : '#888',
+                    callback: (value) => '$' + value.toLocaleString()
+                }
+            };
+
+            if (isRaceMode && raceYMin !== null && raceYMax !== null) {
+                yAxisConfig.min = raceYMin;
+                yAxisConfig.max = raceYMax;
+            }
+
+            mainChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: isRaceMode ? { duration: 0 } : { duration: 400 },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: lightMode ? '#666' : '#888' }
+                        }
+                    },
+                    scales: {
+                        y: yAxisConfig,
+                        x: {
+                            grid: { color: 'rgba(128,128,128,0.1)' },
+                            ticks: { color: lightMode ? '#666' : '#888', maxTicksLimit: 10 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStandings() {
+            if (!performanceData) return;
+
+            const standings = performanceData.players.map((player, i) => {
+                const history = player.history;
+                const currentValue = history.length > 0 ? getValue(history[history.length - 1]) : INITIAL_INVESTMENT;
+                const change = ((currentValue - INITIAL_INVESTMENT) / INITIAL_INVESTMENT * 100);
+
+                return { name: player.name, color: player.color, value: currentValue, change, index: i };
+            }).sort((a, b) => b.value - a.value);
+
+            const container = document.getElementById('standings-list');
+            container.innerHTML = standings.map((s, i) => {
+                const changeClass = s.change >= 0 ? 'positive' : 'negative';
+                const sign = s.change >= 0 ? '+' : '';
+                return `
+                    <div class="standing-item" data-player-index="${s.index}">
+                        <span class="standing-rank">${i + 1}</span>
+                        <span class="standing-name" style="color: ${s.color}">${s.name}</span>
+                        <span class="standing-value">$${s.value.toLocaleString()}</span>
+                        <span class="standing-change ${changeClass}">${sign}${s.change.toFixed(2)}%</span>
+                    </div>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.standing-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const playerIndex = parseInt(item.dataset.playerIndex);
+                    showPlayerModal(playerIndex);
+                });
+            });
+        }
+
+        function updateStandingsAtIndex(index) {
+            if (!performanceData) return;
+
+            const standings = performanceData.players.map((player, i) => {
+                const history = player.history;
+                const currentValue = index < history.length ? getValue(history[index]) : INITIAL_INVESTMENT;
+                const change = ((currentValue - INITIAL_INVESTMENT) / INITIAL_INVESTMENT * 100);
+                return { name: player.name, color: player.color, value: currentValue, change, index: i };
+            }).sort((a, b) => b.value - a.value);
+
+            const container = document.getElementById('standings-list');
+            container.innerHTML = standings.map((s, i) => {
+                const changeClass = s.change >= 0 ? 'positive' : 'negative';
+                const sign = s.change >= 0 ? '+' : '';
+                return `
+                    <div class="standing-item">
+                        <span class="standing-rank">${i + 1}</span>
+                        <span class="standing-name" style="color: ${s.color}">${s.name}</span>
+                        <span class="standing-value">$${s.value.toLocaleString()}</span>
+                        <span class="standing-change ${changeClass}">${sign}${s.change.toFixed(2)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Player Modal
+        async function showPlayerModal(playerIndex) {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = 'Loading player details...';
+
+            try {
+                const response = await fetch(`/api/player-details/${playerIndex}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const modal = document.getElementById('player-modal');
+                document.getElementById('player-modal-title').textContent = data.name;
+                document.getElementById('player-modal-title').style.color = data.color;
+
+                // Render summary
+                const perf = data.performance.all;
+                const changeClass = perf.change_pct >= 0 ? 'positive' : 'negative';
+                const sign = perf.change_pct >= 0 ? '+' : '';
+                document.getElementById('player-summary').innerHTML = `
+                    <div class="summary-card">
+                        <div class="label">Portfolio Value</div>
+                        <div class="value">$${perf.value.toLocaleString()}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="label">Total Change</div>
+                        <div class="value ${changeClass}">${sign}${perf.change_pct.toFixed(2)}%</div>
+                    </div>
+                `;
+
+                // Render positions
+                document.getElementById('player-positions').innerHTML = data.positions.map(pos => {
+                    const posChangeClass = pos.gain_pct >= 0 ? 'positive' : 'negative';
+                    const posSign = pos.gain_pct >= 0 ? '+' : '';
+                    return `
+                        <div class="position-card">
+                            <div class="position-info">
+                                <span class="position-symbol">${pos.symbol}</span>
+                                <span class="position-type-badge ${pos.type}">${pos.type}</span>
+                            </div>
+                            <div class="position-value">
+                                <div class="value">$${pos.current_value.toLocaleString()}</div>
+                                <div class="change ${posChangeClass}">${posSign}${pos.gain_pct.toFixed(2)}%</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                modal.classList.remove('hidden');
+
+                // Load news
+                const newsResponse = await fetch(`/api/news/${data.symbols.join(',')}`);
+                const newsData = await newsResponse.json();
+                const newsEl = document.getElementById('news-list');
+
+                if (newsData.news && newsData.news.length > 0) {
+                    newsEl.innerHTML = newsData.news.slice(0, 5).map(item => `
+                        <div class="news-item">
+                            <a href="${item.link}" target="_blank">${item.title}</a>
+                            <div class="news-meta">
+                                <span class="news-symbol">${item.symbol}</span>
+                                ${item.publisher}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    newsEl.innerHTML = '<p style="color: var(--text-muted)">No recent news</p>';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load player details');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        // Race Mode
+        function startRace() {
+            racePlaying = true;
+            document.getElementById('play-pause').textContent = 'PAUSE';
+
+            function animate() {
+                if (!racePlaying) return;
+                const maxIndex = performanceData.trading_days.length - 1;
+
+                if (raceIndex < maxIndex) {
+                    raceIndex++;
+                    document.getElementById('race-date').textContent = performanceData.trading_days[raceIndex];
+                    updateChart();
+                    updateStandingsAtIndex(raceIndex);
+                    const delay = 200 / raceSpeed;
+                    raceAnimationId = setTimeout(animate, delay);
+                } else {
+                    stopRace();
+                }
+            }
+            animate();
+        }
+
+        function stopRace() {
+            racePlaying = false;
+            document.getElementById('play-pause').textContent = 'PLAY';
+            if (raceAnimationId) {
+                clearTimeout(raceAnimationId);
+                raceAnimationId = null;
+            }
+        }
+
+        function resetRace() {
+            stopRace();
+            raceIndex = 0;
+            calculateRaceBounds();
+            document.getElementById('race-date').textContent = performanceData.trading_days[0];
+            updateChart();
+            updateStandingsAtIndex(0);
+        }
+
+        // Event Listeners
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+
+                const raceControls = document.getElementById('race-controls');
+                if (currentView === 'race') {
+                    raceControls.classList.remove('hidden');
+                    resetRace();
+                } else {
+                    raceControls.classList.add('hidden');
+                    stopRace();
+                    updateChart();
+                    updateStandings();
+                }
+            });
+        });
+
+        document.getElementById('play-pause').addEventListener('click', () => {
+            if (racePlaying) {
+                stopRace();
+            } else {
+                if (raceIndex >= performanceData.trading_days.length - 1) {
+                    raceIndex = 0;
+                }
+                startRace();
+            }
+        });
+
+        document.getElementById('speed-slider').addEventListener('input', (e) => {
+            raceSpeed = parseInt(e.target.value);
+            document.getElementById('speed-label').textContent = `Speed: ${raceSpeed}x`;
+        });
+
+        // Settings
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            document.getElementById('settings-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('short-toggle-btn').addEventListener('click', () => {
+            includeShort = !includeShort;
+            const btn = document.getElementById('short-toggle-btn');
+            btn.textContent = includeShort ? 'ON' : 'OFF';
+            btn.classList.toggle('active', includeShort);
+            if (currentView === 'race') calculateRaceBounds();
+            updateChart();
+            updateStandings();
+        });
+
+        document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+            lightMode = !lightMode;
+            document.getElementById('theme-toggle-btn').textContent = lightMode ? 'DARK' : 'LIGHT';
+            document.body.classList.toggle('light-mode', lightMode);
+            updateChart();
+        });
+
+        // Close modals
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modalId = btn.dataset.close;
+                document.getElementById(modalId).classList.add('hidden');
+            });
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.add('hidden');
+            });
+        });
+
+        // Start
+        init();
+    </script>
 </body>
 </html>
