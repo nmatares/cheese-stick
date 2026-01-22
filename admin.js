@@ -16,16 +16,8 @@ const pendingIcons = {};
 
 // Check if already authenticated (session)
 async function checkAuth() {
-    try {
-        const response = await fetch('/api/admin/check');
-        const data = await response.json();
-        if (data.authenticated) {
-            isAuthenticated = true;
-            showAdminPanel();
-        }
-    } catch (e) {
-        console.log('Not authenticated');
-    }
+    // Skip login for now - go straight to admin panel
+    showAdminPanel();
 }
 
 // Login
