@@ -5,6 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Cheese Stick</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .add-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: 2px dashed var(--accent-color);
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            margin: 10px 0;
+            width: 100%;
+        }
+        .add-btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+        }
+        .remove-player-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: auto;
+        }
+        .player-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .add-stock-btn, .remove-stock-btn {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+        }
+        .add-stock-btn {
+            background: var(--accent-color);
+            color: #000;
+        }
+        .remove-stock-btn {
+            background: #ff4444;
+            color: white;
+        }
+        .stock-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .debug-info {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .debug-info.error {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        .debug-info.success {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+    </style>
 </head>
 <body>
     <div class="view">
@@ -25,155 +94,123 @@
                 <input type="date" id="start-date">
             </div>
 
-            <!-- Player 1 -->
-            <div class="player-form" data-player="0">
-                <h3><span class="player-color" style="background: #FF6384"></span> Player 1</h3>
-                <div class="form-group">
-                    <input type="text" class="player-name" placeholder="Name">
-                </div>
-                <div class="form-group">
-                    <label>Long Positions (5 stocks)</label>
-                    <div class="stocks-row">
-                        <input type="text" class="stock-input" placeholder="AAPL">
-                        <input type="text" class="stock-input" placeholder="GOOGL">
-                        <input type="text" class="stock-input" placeholder="MSFT">
-                        <input type="text" class="stock-input" placeholder="AMZN">
-                        <input type="text" class="stock-input" placeholder="NVDA">
-                    </div>
-                </div>
-                <div class="short-section">
-                    <label>Short Position</label>
-                    <input type="text" class="short-input" placeholder="TSLA">
-                </div>
+            <h3 style="margin: 30px 0 15px; color: var(--accent-color);">PLAYERS</h3>
+
+            <div id="players-container">
+                <!-- Players will be added here dynamically -->
             </div>
 
-            <!-- Player 2 -->
-            <div class="player-form" data-player="1">
-                <h3><span class="player-color" style="background: #36A2EB"></span> Player 2</h3>
-                <div class="form-group">
-                    <input type="text" class="player-name" placeholder="Name">
-                </div>
-                <div class="form-group">
-                    <label>Long Positions (5 stocks)</label>
-                    <div class="stocks-row">
-                        <input type="text" class="stock-input" placeholder="AAPL">
-                        <input type="text" class="stock-input" placeholder="GOOGL">
-                        <input type="text" class="stock-input" placeholder="MSFT">
-                        <input type="text" class="stock-input" placeholder="AMZN">
-                        <input type="text" class="stock-input" placeholder="NVDA">
-                    </div>
-                </div>
-                <div class="short-section">
-                    <label>Short Position</label>
-                    <input type="text" class="short-input" placeholder="TSLA">
-                </div>
-            </div>
+            <button id="add-player-btn" class="add-btn">+ ADD PLAYER</button>
 
-            <!-- Player 3 -->
-            <div class="player-form" data-player="2">
-                <h3><span class="player-color" style="background: #FFCE56"></span> Player 3</h3>
-                <div class="form-group">
-                    <input type="text" class="player-name" placeholder="Name">
-                </div>
-                <div class="form-group">
-                    <label>Long Positions (5 stocks)</label>
-                    <div class="stocks-row">
-                        <input type="text" class="stock-input" placeholder="AAPL">
-                        <input type="text" class="stock-input" placeholder="GOOGL">
-                        <input type="text" class="stock-input" placeholder="MSFT">
-                        <input type="text" class="stock-input" placeholder="AMZN">
-                        <input type="text" class="stock-input" placeholder="NVDA">
-                    </div>
-                </div>
-                <div class="short-section">
-                    <label>Short Position</label>
-                    <input type="text" class="short-input" placeholder="TSLA">
-                </div>
-            </div>
+            <button id="save-btn" class="primary-btn">SAVE CHANGES</button>
+            <button id="test-db-btn" class="add-btn" style="margin-top: 10px;">TEST DATABASE CONNECTION</button>
 
-            <!-- Player 4 -->
-            <div class="player-form" data-player="3">
-                <h3><span class="player-color" style="background: #4BC0C0"></span> Player 4</h3>
-                <div class="form-group">
-                    <input type="text" class="player-name" placeholder="Name">
-                </div>
-                <div class="form-group">
-                    <label>Long Positions (5 stocks)</label>
-                    <div class="stocks-row">
-                        <input type="text" class="stock-input" placeholder="AAPL">
-                        <input type="text" class="stock-input" placeholder="GOOGL">
-                        <input type="text" class="stock-input" placeholder="MSFT">
-                        <input type="text" class="stock-input" placeholder="AMZN">
-                        <input type="text" class="stock-input" placeholder="NVDA">
-                    </div>
-                </div>
-                <div class="short-section">
-                    <label>Short Position</label>
-                    <input type="text" class="short-input" placeholder="TSLA">
-                </div>
-            </div>
-
-            <!-- Player 5 -->
-            <div class="player-form" data-player="4">
-                <h3><span class="player-color" style="background: #9966FF"></span> Player 5</h3>
-                <div class="form-group">
-                    <input type="text" class="player-name" placeholder="Name">
-                </div>
-                <div class="form-group">
-                    <label>Long Positions (5 stocks)</label>
-                    <div class="stocks-row">
-                        <input type="text" class="stock-input" placeholder="AAPL">
-                        <input type="text" class="stock-input" placeholder="GOOGL">
-                        <input type="text" class="stock-input" placeholder="MSFT">
-                        <input type="text" class="stock-input" placeholder="AMZN">
-                        <input type="text" class="stock-input" placeholder="NVDA">
-                    </div>
-                </div>
-                <div class="short-section">
-                    <label>Short Position</label>
-                    <input type="text" class="short-input" placeholder="TSLA">
-                </div>
-            </div>
-
-            <button id="save-competition" class="primary-btn">SAVE CHANGES</button>
-            <p id="save-status" class="status-text hidden"></p>
+            <div id="debug-info" class="debug-info"></div>
         </div>
     </div>
 
     <script>
-        const PLAYER_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+        const PLAYER_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7C4DFF'];
+        let playerCount = 0;
 
-        // Load existing data on page load
-        async function loadData() {
-            try {
-                const response = await fetch('/api/competition');
-                const competition = await response.json();
+        // Create a player form
+        function createPlayerForm(playerData = null) {
+            const index = playerCount++;
+            const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
 
-                if (competition) {
-                    document.getElementById('comp-name').value = competition.name || '';
-                    document.getElementById('start-date').value = competition.start_date || '';
+            const div = document.createElement('div');
+            div.className = 'player-form';
+            div.dataset.index = index;
 
-                    if (competition.players) {
-                        competition.players.forEach((player, i) => {
-                            const form = document.querySelector(`.player-form[data-player="${i}"]`);
-                            if (form) {
-                                form.querySelector('.player-name').value = player.name || '';
-                                player.longs.forEach((symbol, j) => {
-                                    const input = form.querySelectorAll('.stock-input')[j];
-                                    if (input) input.value = symbol;
-                                });
-                                form.querySelector('.short-input').value = player.short || '';
-                            }
-                        });
-                    }
-                }
-            } catch (e) {
-                console.log('No existing data');
+            const stocksHtml = (playerData?.longs || ['', '', '', '', '']).map((stock, i) =>
+                `<input type="text" class="stock-input" value="${stock}" placeholder="AAPL">`
+            ).join('');
+
+            div.innerHTML = `
+                <div class="player-header">
+                    <span class="player-color" style="background: ${color}"></span>
+                    <input type="text" class="player-name" value="${playerData?.name || ''}" placeholder="Player Name" style="flex:1; font-weight: bold;">
+                    <button type="button" class="remove-player-btn" onclick="removePlayer(this)">REMOVE</button>
+                </div>
+                <input type="hidden" class="player-color-value" value="${color}">
+                <div class="form-group" style="margin-top: 12px;">
+                    <label>Long Positions</label>
+                    <div class="stocks-container">
+                        ${stocksHtml}
+                    </div>
+                    <div class="stock-controls">
+                        <button type="button" class="add-stock-btn" onclick="addStock(this)">+ Add Stock</button>
+                        <button type="button" class="remove-stock-btn" onclick="removeStock(this)">- Remove Stock</button>
+                    </div>
+                </div>
+                <div class="short-section" style="margin-top: 12px;">
+                    <label>Short Position</label>
+                    <input type="text" class="short-input" value="${playerData?.short || ''}" placeholder="TSLA">
+                </div>
+            `;
+
+            document.getElementById('players-container').appendChild(div);
+        }
+
+        function removePlayer(btn) {
+            btn.closest('.player-form').remove();
+        }
+
+        function addStock(btn) {
+            const container = btn.closest('.form-group').querySelector('.stocks-container');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'stock-input';
+            input.placeholder = 'SYMBOL';
+            container.appendChild(input);
+        }
+
+        function removeStock(btn) {
+            const container = btn.closest('.form-group').querySelector('.stocks-container');
+            const inputs = container.querySelectorAll('.stock-input');
+            if (inputs.length > 1) {
+                inputs[inputs.length - 1].remove();
             }
         }
 
-        // Save competition
-        document.getElementById('save-competition').addEventListener('click', async () => {
+        // Load existing data
+        async function loadData() {
+            const debugEl = document.getElementById('debug-info');
+            debugEl.textContent = 'Loading data...';
+
+            try {
+                const response = await fetch('/api/competition');
+                const data = await response.json();
+
+                console.log('Loaded competition:', data);
+                debugEl.textContent = 'Loaded: ' + JSON.stringify(data ? {name: data.name, players: data.players?.length} : null);
+
+                if (data && data.players && data.players.length > 0) {
+                    document.getElementById('comp-name').value = data.name || '';
+                    document.getElementById('start-date').value = data.start_date || '';
+
+                    data.players.forEach(player => {
+                        createPlayerForm(player);
+                    });
+                } else {
+                    // Create one empty player to start
+                    createPlayerForm();
+                    debugEl.textContent = 'No existing data - starting fresh';
+                }
+            } catch (e) {
+                console.error('Load error:', e);
+                debugEl.textContent = 'Load error: ' + e.message;
+                debugEl.className = 'debug-info error';
+                createPlayerForm();
+            }
+        }
+
+        // Save data
+        document.getElementById('save-btn').addEventListener('click', async () => {
+            const debugEl = document.getElementById('debug-info');
+            debugEl.className = 'debug-info';
+            debugEl.textContent = 'Saving...';
+
             const name = document.getElementById('comp-name').value || 'Cheese Stick';
             const startDate = document.getElementById('start-date').value;
 
@@ -185,31 +222,38 @@
             const players = [];
             const playerForms = document.querySelectorAll('.player-form');
 
-            for (let i = 0; i < playerForms.length; i++) {
-                const form = playerForms[i];
-                const playerName = form.querySelector('.player-name').value || `Player ${i + 1}`;
+            for (const form of playerForms) {
+                const playerName = form.querySelector('.player-name').value.trim();
+                const color = form.querySelector('.player-color-value').value;
                 const stockInputs = form.querySelectorAll('.stock-input');
                 const shortInput = form.querySelector('.short-input');
 
-                const longs = Array.from(stockInputs).map(input => input.value.toUpperCase().trim()).filter(v => v);
+                const longs = Array.from(stockInputs)
+                    .map(input => input.value.toUpperCase().trim())
+                    .filter(v => v);
                 const short = shortInput.value.toUpperCase().trim();
 
-                if (longs.length !== 5) {
-                    alert(`Player ${i + 1} must have exactly 5 long positions`);
+                if (!playerName) {
+                    alert('Please enter a name for all players');
+                    return;
+                }
+
+                if (longs.length === 0) {
+                    alert(`${playerName} needs at least one long position`);
                     return;
                 }
 
                 if (!short) {
-                    alert(`Player ${i + 1} must have a short position`);
+                    alert(`${playerName} needs a short position`);
                     return;
                 }
 
-                players.push({
-                    name: playerName,
-                    color: PLAYER_COLORS[i],
-                    longs,
-                    short
-                });
+                players.push({ name: playerName, color, longs, short });
+            }
+
+            if (players.length === 0) {
+                alert('Add at least one player');
+                return;
             }
 
             const competitionData = {
@@ -220,6 +264,9 @@
                 players
             };
 
+            console.log('Saving:', competitionData);
+            debugEl.textContent = 'Sending: ' + JSON.stringify({name, players: players.length});
+
             try {
                 const response = await fetch('/api/admin/save', {
                     method: 'POST',
@@ -227,22 +274,70 @@
                     body: JSON.stringify(competitionData)
                 });
 
+                const result = await response.json();
+                console.log('Save response:', response.status, result);
+
                 if (response.ok) {
-                    const statusEl = document.getElementById('save-status');
-                    statusEl.textContent = 'Saved! Redirecting...';
-                    statusEl.classList.remove('hidden');
-                    statusEl.style.color = '#00ff88';
-                    setTimeout(() => window.location.href = '/', 1500);
+                    debugEl.className = 'debug-info success';
+                    debugEl.textContent = 'SUCCESS! Data saved. Response: ' + JSON.stringify(result);
+
+                    // Verify it was saved
+                    setTimeout(async () => {
+                        const verifyResponse = await fetch('/api/competition');
+                        const verifyData = await verifyResponse.json();
+                        debugEl.textContent += ' | Verified: ' + (verifyData?.players?.length || 0) + ' players';
+                    }, 500);
                 } else {
-                    alert('Failed to save');
+                    debugEl.className = 'debug-info error';
+                    debugEl.textContent = 'FAILED! Status: ' + response.status + ' - ' + JSON.stringify(result);
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to save');
+                console.error('Save error:', error);
+                debugEl.className = 'debug-info error';
+                debugEl.textContent = 'ERROR: ' + error.message;
             }
         });
 
-        // Load data when page loads
+        // Add player button
+        document.getElementById('add-player-btn').addEventListener('click', () => {
+            createPlayerForm();
+        });
+
+        // Test database button
+        document.getElementById('test-db-btn').addEventListener('click', async () => {
+            const debugEl = document.getElementById('debug-info');
+            debugEl.className = 'debug-info';
+            debugEl.textContent = 'Testing database connection...';
+
+            try {
+                const response = await fetch('/api/debug/env');
+                const data = await response.json();
+                console.log('Debug env:', data);
+
+                const status = [];
+                status.push('MongoDB connected: ' + (data.mongodb_connected ? 'YES' : 'NO'));
+                status.push('MongoDB test: ' + (data.mongodb_test || 'not tested'));
+                status.push('URI has <brackets>: ' + (data.mongodb_uri_has_brackets ? 'YES - FIX THIS!' : 'No'));
+                status.push('Competition loaded: ' + (data.competition_loaded ? 'YES' : 'NO'));
+                status.push('Players in DB: ' + data.competition_players);
+
+                if (data.mongodb_uri_has_brackets) {
+                    debugEl.className = 'debug-info error';
+                    debugEl.textContent = 'ERROR: Your MONGODB_URI has angle brackets! Replace <password> with your actual password (no brackets). ' + status.join(' | ');
+                } else if (!data.mongodb_connected) {
+                    debugEl.className = 'debug-info error';
+                    debugEl.textContent = 'MongoDB NOT connected - using local file. ' + status.join(' | ');
+                } else {
+                    debugEl.className = 'debug-info success';
+                    debugEl.textContent = status.join(' | ');
+                }
+            } catch (e) {
+                debugEl.className = 'debug-info error';
+                debugEl.textContent = 'Test failed: ' + e.message;
+            }
+        });
+
+        // Load on start
         loadData();
     </script>
 </body>

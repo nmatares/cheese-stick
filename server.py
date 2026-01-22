@@ -165,11 +165,31 @@ def admin_check():
 @app.route('/api/debug/env', methods=['GET'])
 def debug_env():
     """Temporary debug endpoint - remove after fixing"""
+    # Test MongoDB write/read
+    mongo_test = None
+    if db is not None:
+        try:
+            # Try to write a test document
+            db.test.replace_one({'_id': 'test'}, {'_id': 'test', 'value': 'works'}, upsert=True)
+            # Try to read it back
+            doc = db.test.find_one({'_id': 'test'})
+            mongo_test = 'read/write OK' if doc else 'write OK but read failed'
+        except Exception as e:
+            mongo_test = f'error: {str(e)}'
+
+    # Check current competition data
+    comp_data = load_competition()
+
     return jsonify({
         'admin_password_length': len(ADMIN_PASSWORD),
         'admin_password_set': ADMIN_PASSWORD != 'cheesestick',
         'mongodb_connected': db is not None,
-        'secret_key_set': app.secret_key is not None
+        'mongodb_test': mongo_test,
+        'mongodb_uri_set': MONGODB_URI is not None,
+        'mongodb_uri_has_brackets': '<' in (MONGODB_URI or ''),
+        'secret_key_set': app.secret_key is not None,
+        'competition_loaded': comp_data is not None,
+        'competition_players': len(comp_data.get('players', [])) if comp_data else 0
     })
 
 @app.route('/api/admin/logout', methods=['POST'])
@@ -179,10 +199,29 @@ def admin_logout():
 
 @app.route('/api/admin/save', methods=['POST'])
 def admin_save():
-    # Temporarily allowing without auth - add security later
     data = request.json
-    save_competition(data)
-    return jsonify({'success': True})
+    print(f"Saving competition: {data.get('name')} with {len(data.get('players', []))} players")
+
+    try:
+        save_competition(data)
+
+        # Verify the save worked
+        loaded = load_competition()
+        if loaded and loaded.get('players'):
+            return jsonify({
+                'success': True,
+                'saved_players': len(loaded.get('players', [])),
+                'storage': 'mongodb' if db is not None else 'file'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Data did not persist after save',
+                'storage': 'mongodb' if db is not None else 'file'
+            }), 500
+    except Exception as e:
+        print(f"Save error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/validate-symbol/<symbol>', methods=['GET'])
 def validate_symbol_endpoint(symbol):
