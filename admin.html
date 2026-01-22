@@ -7,28 +7,11 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Login View -->
-    <div id="login-view" class="view">
-        <div class="setup-container">
-            <h1>ADMIN ACCESS</h1>
-            <p class="subtitle">Enter password to manage competition</p>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="admin-password" placeholder="Enter admin password">
-            </div>
-
-            <button id="login-btn" class="primary-btn">LOGIN</button>
-            <p id="login-error" class="error-text hidden">Invalid password</p>
-        </div>
-    </div>
-
-    <!-- Admin Panel -->
-    <div id="admin-view" class="view hidden">
+    <div class="view">
         <div class="setup-container">
             <div class="admin-header">
                 <h1>ADMIN PANEL</h1>
-                <button id="back-to-site" class="icon-btn">VIEW SITE</button>
+                <a href="/" class="icon-btn">VIEW SITE</a>
             </div>
             <p class="subtitle">Manage Competition Settings</p>
 
@@ -42,18 +25,225 @@
                 <input type="date" id="start-date">
             </div>
 
-            <div id="players-container">
-                <!-- Player forms will be generated here -->
+            <!-- Player 1 -->
+            <div class="player-form" data-player="0">
+                <h3><span class="player-color" style="background: #FF6384"></span> Player 1</h3>
+                <div class="form-group">
+                    <input type="text" class="player-name" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Long Positions (5 stocks)</label>
+                    <div class="stocks-row">
+                        <input type="text" class="stock-input" placeholder="AAPL">
+                        <input type="text" class="stock-input" placeholder="GOOGL">
+                        <input type="text" class="stock-input" placeholder="MSFT">
+                        <input type="text" class="stock-input" placeholder="AMZN">
+                        <input type="text" class="stock-input" placeholder="NVDA">
+                    </div>
+                </div>
+                <div class="short-section">
+                    <label>Short Position</label>
+                    <input type="text" class="short-input" placeholder="TSLA">
+                </div>
             </div>
 
-            <!-- Hidden canvas for image processing -->
-            <canvas id="icon-canvas" style="display: none;" width="100" height="100"></canvas>
+            <!-- Player 2 -->
+            <div class="player-form" data-player="1">
+                <h3><span class="player-color" style="background: #36A2EB"></span> Player 2</h3>
+                <div class="form-group">
+                    <input type="text" class="player-name" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Long Positions (5 stocks)</label>
+                    <div class="stocks-row">
+                        <input type="text" class="stock-input" placeholder="AAPL">
+                        <input type="text" class="stock-input" placeholder="GOOGL">
+                        <input type="text" class="stock-input" placeholder="MSFT">
+                        <input type="text" class="stock-input" placeholder="AMZN">
+                        <input type="text" class="stock-input" placeholder="NVDA">
+                    </div>
+                </div>
+                <div class="short-section">
+                    <label>Short Position</label>
+                    <input type="text" class="short-input" placeholder="TSLA">
+                </div>
+            </div>
+
+            <!-- Player 3 -->
+            <div class="player-form" data-player="2">
+                <h3><span class="player-color" style="background: #FFCE56"></span> Player 3</h3>
+                <div class="form-group">
+                    <input type="text" class="player-name" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Long Positions (5 stocks)</label>
+                    <div class="stocks-row">
+                        <input type="text" class="stock-input" placeholder="AAPL">
+                        <input type="text" class="stock-input" placeholder="GOOGL">
+                        <input type="text" class="stock-input" placeholder="MSFT">
+                        <input type="text" class="stock-input" placeholder="AMZN">
+                        <input type="text" class="stock-input" placeholder="NVDA">
+                    </div>
+                </div>
+                <div class="short-section">
+                    <label>Short Position</label>
+                    <input type="text" class="short-input" placeholder="TSLA">
+                </div>
+            </div>
+
+            <!-- Player 4 -->
+            <div class="player-form" data-player="3">
+                <h3><span class="player-color" style="background: #4BC0C0"></span> Player 4</h3>
+                <div class="form-group">
+                    <input type="text" class="player-name" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Long Positions (5 stocks)</label>
+                    <div class="stocks-row">
+                        <input type="text" class="stock-input" placeholder="AAPL">
+                        <input type="text" class="stock-input" placeholder="GOOGL">
+                        <input type="text" class="stock-input" placeholder="MSFT">
+                        <input type="text" class="stock-input" placeholder="AMZN">
+                        <input type="text" class="stock-input" placeholder="NVDA">
+                    </div>
+                </div>
+                <div class="short-section">
+                    <label>Short Position</label>
+                    <input type="text" class="short-input" placeholder="TSLA">
+                </div>
+            </div>
+
+            <!-- Player 5 -->
+            <div class="player-form" data-player="4">
+                <h3><span class="player-color" style="background: #9966FF"></span> Player 5</h3>
+                <div class="form-group">
+                    <input type="text" class="player-name" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Long Positions (5 stocks)</label>
+                    <div class="stocks-row">
+                        <input type="text" class="stock-input" placeholder="AAPL">
+                        <input type="text" class="stock-input" placeholder="GOOGL">
+                        <input type="text" class="stock-input" placeholder="MSFT">
+                        <input type="text" class="stock-input" placeholder="AMZN">
+                        <input type="text" class="stock-input" placeholder="NVDA">
+                    </div>
+                </div>
+                <div class="short-section">
+                    <label>Short Position</label>
+                    <input type="text" class="short-input" placeholder="TSLA">
+                </div>
+            </div>
 
             <button id="save-competition" class="primary-btn">SAVE CHANGES</button>
             <p id="save-status" class="status-text hidden"></p>
         </div>
     </div>
 
-    <script src="admin.js"></script>
+    <script>
+        const PLAYER_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+
+        // Load existing data on page load
+        async function loadData() {
+            try {
+                const response = await fetch('/api/competition');
+                const competition = await response.json();
+
+                if (competition) {
+                    document.getElementById('comp-name').value = competition.name || '';
+                    document.getElementById('start-date').value = competition.start_date || '';
+
+                    if (competition.players) {
+                        competition.players.forEach((player, i) => {
+                            const form = document.querySelector(`.player-form[data-player="${i}"]`);
+                            if (form) {
+                                form.querySelector('.player-name').value = player.name || '';
+                                player.longs.forEach((symbol, j) => {
+                                    const input = form.querySelectorAll('.stock-input')[j];
+                                    if (input) input.value = symbol;
+                                });
+                                form.querySelector('.short-input').value = player.short || '';
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('No existing data');
+            }
+        }
+
+        // Save competition
+        document.getElementById('save-competition').addEventListener('click', async () => {
+            const name = document.getElementById('comp-name').value || 'Cheese Stick';
+            const startDate = document.getElementById('start-date').value;
+
+            if (!startDate) {
+                alert('Please select a start date');
+                return;
+            }
+
+            const players = [];
+            const playerForms = document.querySelectorAll('.player-form');
+
+            for (let i = 0; i < playerForms.length; i++) {
+                const form = playerForms[i];
+                const playerName = form.querySelector('.player-name').value || `Player ${i + 1}`;
+                const stockInputs = form.querySelectorAll('.stock-input');
+                const shortInput = form.querySelector('.short-input');
+
+                const longs = Array.from(stockInputs).map(input => input.value.toUpperCase().trim()).filter(v => v);
+                const short = shortInput.value.toUpperCase().trim();
+
+                if (longs.length !== 5) {
+                    alert(`Player ${i + 1} must have exactly 5 long positions`);
+                    return;
+                }
+
+                if (!short) {
+                    alert(`Player ${i + 1} must have a short position`);
+                    return;
+                }
+
+                players.push({
+                    name: playerName,
+                    color: PLAYER_COLORS[i],
+                    longs,
+                    short
+                });
+            }
+
+            const competitionData = {
+                name,
+                start_date: startDate,
+                initial_investment: 100000,
+                stock_allocation: 20000,
+                players
+            };
+
+            try {
+                const response = await fetch('/api/admin/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(competitionData)
+                });
+
+                if (response.ok) {
+                    const statusEl = document.getElementById('save-status');
+                    statusEl.textContent = 'Saved! Redirecting...';
+                    statusEl.classList.remove('hidden');
+                    statusEl.style.color = '#00ff88';
+                    setTimeout(() => window.location.href = '/', 1500);
+                } else {
+                    alert('Failed to save');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to save');
+            }
+        });
+
+        // Load data when page loads
+        loadData();
+    </script>
 </body>
 </html>
